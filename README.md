@@ -49,7 +49,7 @@ The current design assigns exactly one category per email. A real inbox sometime
 
 ## Screenshots
 
-*(See linked Google Drive folder for full screenshot set: workflow canvas, node configs, execution logs, Slack notifications, Airtable records.)*
+*(See [screenshot folder](https://drive.google.com/drive/folders/1rGtQnQFtF-5ytvB8-pHY5FMb0We5Pfy3?usp=drive_link) for full screenshot set: workflow canvas, node configs, execution logs, Slack notifications, Airtable records.)*
 
 ## Author
 
