@@ -1,0 +1,1621 @@
+{
+  "name": "Email Classification Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "labelIds": [
+            "UNREAD"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c697eab3-16d4-4800-85c3-d0b56d46a7e1",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DRAWtDTcaORE6b8E",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Subject: {{ $json.subject }}\n  From: {{ $json.from }}\n  Body: {{ $json.body }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an email classification assistant. Classify the email into exactly one category: Sales, Customer Service, HR, Finance, Operations, or Other. Also extract the sender, subject, and write a one-sentence summary. Return ONLY valid JSON matching the required schema."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "108f07a8-8e3c-4000-b360-97816bce091b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        608,
+        224
+      ],
+      "id": "8b1c2a0a-648f-4458-bf8f-c94c1cfcdd56",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "HRJG1xp2489RsmcY",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "4493932b-a79a-4d83-af4a-ed2fd870b551"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Sales"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b6e45dd4-66e3-4c28-bf78-71d30cb356ae",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Customer Service",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Customer Service"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "19128586-2b6c-4f3f-833d-cae81dfada57",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "HR",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HR"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7b12212a-d5ed-4653-8d06-e40547f26ed0",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Finance",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Finance"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "38cb181c-a0af-4e48-a7fa-320bb792fabf",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Operations",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Operations"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        976,
+        -64
+      ],
+      "id": "fe9d4d88-a526-47f0-a5c3-5a39cc0fe6e9",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "539d9720-419f-4b5c-94d0-a07a926f8c97",
+      "name": "Get a message",
+      "webhookId": "ce01dd39-7501-4dd3-9891-7af778c70ab3",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DRAWtDTcaORE6b8E",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n     json: {\n       from: $input.first().json.From,\n       subject: $input.first().json.Subject,\n       body: $input.first().json.snippet,\n       date: $input.first().json.internalDate\n     }\n   }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "a4b6d6ae-8c45-4362-8623-ca954ebe303c",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n     \"category\": \"Sales\",\n     \"from\": \"sender@example.com\",\n     \"subject\": \"Email subject here\",\n     \"summary\": \"One sentence summary of the email\"\n   }"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        208
+      ],
+      "id": "d03846b8-c2f3-4650-a058-cb291f93101a",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appWfi3IpdSxTsJ9f",
+          "mode": "list",
+          "cachedResultName": "Email Classification",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblUbwcTbGszigLTj",
+          "mode": "list",
+          "cachedResultName": "Classified Emails",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f/tblUbwcTbGszigLTj"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "From": "={{ $('AI Agent').item.json.output.from }}",
+            "Subject": "={{ $('AI Agent').item.json.output.subject }}",
+            "Body": "={{ $('AI Agent').item.json.output.summary }}",
+            "Category": "={{ $('AI Agent').item.json.output.category }}",
+            "Date Received": "={{ new Date(Number($('Code in JavaScript').item.json.date)).toISOString().split('T')[0] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Body",
+              "displayName": "Body",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Sales",
+                  "value": "Sales"
+                },
+                {
+                  "name": "Customer Service",
+                  "value": "Customer Service"
+                },
+                {
+                  "name": "HR",
+                  "value": "HR"
+                },
+                {
+                  "name": "Finance",
+                  "value": "Finance"
+                },
+                {
+                  "name": "Operations",
+                  "value": "Operations"
+                },
+                {
+                  "name": "Other",
+                  "value": "Other"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Date Received",
+              "displayName": "Date Received",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1664,
+        -336
+      ],
+      "id": "6026d80a-abb2-4cbb-9217-a28f90e72586",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "oiULUF3IZCoZs6e6",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appWfi3IpdSxTsJ9f",
+          "mode": "list",
+          "cachedResultName": "Email Classification",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblUbwcTbGszigLTj",
+          "mode": "list",
+          "cachedResultName": "Classified Emails",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f/tblUbwcTbGszigLTj"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "From": "={{ $('AI Agent').item.json.output.from }}",
+            "Subject": "={{ $('AI Agent').item.json.output.subject }}",
+            "Body": "={{ $('AI Agent').item.json.output.summary }}",
+            "Category": "={{ $('AI Agent').item.json.output.category }}",
+            "Date Received": "={{ new Date(Number($('Code in JavaScript').item.json.date)).toISOString().split('T')[0] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Body",
+              "displayName": "Body",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Sales",
+                  "value": "Sales"
+                },
+                {
+                  "name": "Customer Service",
+                  "value": "Customer Service"
+                },
+                {
+                  "name": "HR",
+                  "value": "HR"
+                },
+                {
+                  "name": "Finance",
+                  "value": "Finance"
+                },
+                {
+                  "name": "Operations",
+                  "value": "Operations"
+                },
+                {
+                  "name": "Other",
+                  "value": "Other"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Date Received",
+              "displayName": "Date Received",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1664,
+        -176
+      ],
+      "id": "56d8528c-d4f1-45b7-9baa-bd33fdc24e0b",
+      "name": "Create a record1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "oiULUF3IZCoZs6e6",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appWfi3IpdSxTsJ9f",
+          "mode": "list",
+          "cachedResultName": "Email Classification",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblUbwcTbGszigLTj",
+          "mode": "list",
+          "cachedResultName": "Classified Emails",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f/tblUbwcTbGszigLTj"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "From": "={{ $('Switch').item.json.output.from }}",
+            "Subject": "={{ $('Switch').item.json.output.subject }}",
+            "Body": "={{ $('Switch').item.json.output.summary }}",
+            "Category": "={{ $('Switch').item.json.output.category }}",
+            "Date Received": "={{ new Date(Number($('Code in JavaScript').item.json.date)).toISOString().split('T')[0] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Body",
+              "displayName": "Body",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Sales",
+                  "value": "Sales"
+                },
+                {
+                  "name": "Customer Service",
+                  "value": "Customer Service"
+                },
+                {
+                  "name": "HR",
+                  "value": "HR"
+                },
+                {
+                  "name": "Finance",
+                  "value": "Finance"
+                },
+                {
+                  "name": "Operations",
+                  "value": "Operations"
+                },
+                {
+                  "name": "Other",
+                  "value": "Other"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Date Received",
+              "displayName": "Date Received",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1664,
+        -16
+      ],
+      "id": "b05499cf-60c8-46cd-820a-4025d2273ce2",
+      "name": "Create a record2",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "oiULUF3IZCoZs6e6",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appWfi3IpdSxTsJ9f",
+          "mode": "list",
+          "cachedResultName": "Email Classification",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblUbwcTbGszigLTj",
+          "mode": "list",
+          "cachedResultName": "Classified Emails",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f/tblUbwcTbGszigLTj"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "From": "={{ $('AI Agent').item.json.output.from }}",
+            "Subject": "={{ $('AI Agent').item.json.output.subject }}",
+            "Body": "={{ $('AI Agent').item.json.output.summary }}",
+            "Category": "={{ $('AI Agent').item.json.output.category }}",
+            "Date Received": "={{ new Date(Number($('Code in JavaScript').item.json.date)).toISOString().split('T')[0] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Body",
+              "displayName": "Body",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Sales",
+                  "value": "Sales"
+                },
+                {
+                  "name": "Customer Service",
+                  "value": "Customer Service"
+                },
+                {
+                  "name": "HR",
+                  "value": "HR"
+                },
+                {
+                  "name": "Finance",
+                  "value": "Finance"
+                },
+                {
+                  "name": "Operations",
+                  "value": "Operations"
+                },
+                {
+                  "name": "Other",
+                  "value": "Other"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Date Received",
+              "displayName": "Date Received",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1664,
+        160
+      ],
+      "id": "916dd25c-b7ad-4920-b3e1-8f45a18ce812",
+      "name": "Create a record3",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "oiULUF3IZCoZs6e6",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appWfi3IpdSxTsJ9f",
+          "mode": "list",
+          "cachedResultName": "Email Classification",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblUbwcTbGszigLTj",
+          "mode": "list",
+          "cachedResultName": "Classified Emails",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f/tblUbwcTbGszigLTj"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "From": "={{ $('AI Agent').item.json.output.from }}",
+            "Subject": "={{ $('AI Agent').item.json.output.subject }}",
+            "Body": "={{ $('AI Agent').item.json.output.summary }}",
+            "Category": "={{ $('AI Agent').item.json.output.category }}",
+            "Date Received": "={{ new Date(Number($('Code in JavaScript').item.json.date)).toISOString().split('T')[0] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Body",
+              "displayName": "Body",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Sales",
+                  "value": "Sales"
+                },
+                {
+                  "name": "Customer Service",
+                  "value": "Customer Service"
+                },
+                {
+                  "name": "HR",
+                  "value": "HR"
+                },
+                {
+                  "name": "Finance",
+                  "value": "Finance"
+                },
+                {
+                  "name": "Operations",
+                  "value": "Operations"
+                },
+                {
+                  "name": "Other",
+                  "value": "Other"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Date Received",
+              "displayName": "Date Received",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "New",
+                  "value": "New"
+                },
+                {
+                  "name": "Reviewed",
+                  "value": "Reviewed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1664,
+        336
+      ],
+      "id": "479ea460-6641-4fdb-bdc1-767d2a71e089",
+      "name": "Create a record4",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "oiULUF3IZCoZs6e6",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appWfi3IpdSxTsJ9f",
+          "mode": "list",
+          "cachedResultName": "Email Classification",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblUbwcTbGszigLTj",
+          "mode": "list",
+          "cachedResultName": "Classified Emails",
+          "cachedResultUrl": "https://airtable.com/appWfi3IpdSxTsJ9f/tblUbwcTbGszigLTj"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "From": "={{ $('AI Agent').item.json.output.from }}",
+            "Subject": "={{ $('AI Agent').item.json.output.subject }}",
+            "Body": "={{ $('AI Agent').item.json.output.summary }}",
+            "Category": "={{ $('AI Agent').item.json.output.category }}",
+            "Date Received": "={{ new Date(Number($('Code in JavaScript').item.json.date)).toISOString().split('T')[0] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Body",
+              "displayName": "Body",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Sales",
+                  "value": "Sales"
+                },
+                {
+                  "name": "Customer Service",
+                  "value": "Customer Service"
+                },
+                {
+                  "name": "HR",
+                  "value": "HR"
+                },
+                {
+                  "name": "Finance",
+                  "value": "Finance"
+                },
+                {
+                  "name": "Operations",
+                  "value": "Operations"
+                },
+                {
+                  "name": "Other",
+                  "value": "Other"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Date Received",
+              "displayName": "Date Received",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1664,
+        512
+      ],
+      "id": "3496d69f-bb8b-4bf8-8f73-e6094151e29f",
+      "name": "Create a record5",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "oiULUF3IZCoZs6e6",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BERTQFWQN",
+          "mode": "id"
+        },
+        "text": "=📩 *New Sales Email*\n\n*From:* {{ $json.output.from }}\n*Subject:* {{ $json.output.subject }}\n*Summary:* {{ $json.output.summary }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1472,
+        -336
+      ],
+      "id": "5b2d8192-e0e7-4c37-9aa2-c7d4a02ba258",
+      "name": "Send a message",
+      "webhookId": "2168489a-16ec-4279-89e2-8b395830c771",
+      "credentials": {
+        "slackApi": {
+          "id": "Xj9bK2zz6GKDaKPl",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BERTQFWQN",
+          "mode": "id"
+        },
+        "text": "=🎧 *New Customer Service Email*\n\n*From:* {{ $json.output.from }}\n*Subject:* {{ $json.output.subject }}\n*Summary:* {{ $json.output.summary }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1472,
+        -176
+      ],
+      "id": "846c3e47-4ec3-4e00-864d-700dbcce3fd4",
+      "name": "Send a message1",
+      "webhookId": "53f64fc8-5693-474b-9634-9fded3504eeb",
+      "credentials": {
+        "slackApi": {
+          "id": "Xj9bK2zz6GKDaKPl",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BERTQFWQN",
+          "mode": "id"
+        },
+        "text": "=🧑‍💼 *New HR Email*\n\n*From:* {{ $json.output.from }}\n*Subject:* {{ $json.output.subject }}\n*Summary:* {{ $json.output.summary }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1472,
+        -16
+      ],
+      "id": "0db67ea9-f29d-46b1-9c27-a9a7981f991e",
+      "name": "Send a message2",
+      "webhookId": "2fc990b8-487d-400a-b0fd-d497b2d1be30",
+      "credentials": {
+        "slackApi": {
+          "id": "Xj9bK2zz6GKDaKPl",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BERTQFWQN",
+          "mode": "id"
+        },
+        "text": "=💰 *New Finance Email*\n\n*From:* {{ $json.output.from }}\n*Subject:* {{ $json.output.subject }}\n*Summary:* {{ $json.output.summary }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1472,
+        160
+      ],
+      "id": "0dadcf31-5e91-4d50-ac5c-c1609f4872b5",
+      "name": "Send a message3",
+      "webhookId": "42a0ab43-c6d3-401b-a93b-c17f2d0fb13e",
+      "credentials": {
+        "slackApi": {
+          "id": "Xj9bK2zz6GKDaKPl",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BERTQFWQN",
+          "mode": "id"
+        },
+        "text": "=⚙️ *New Operations Email*\n\n*From:* {{ $json.output.from }}\n*Subject:* {{ $json.output.subject }}\n*Summary:* {{ $json.output.summary }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1472,
+        336
+      ],
+      "id": "f07f262c-9206-4e5f-8252-e237c4867a82",
+      "name": "Send a message4",
+      "webhookId": "e4206de7-46ff-4238-849b-0aabdaa49e16",
+      "credentials": {
+        "slackApi": {
+          "id": "Xj9bK2zz6GKDaKPl",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BERTQFWQN",
+          "mode": "id"
+        },
+        "text": "=📭 *Uncategorized Email*\n\n*From:* {{ $json.output.from }}\n*Subject:* {{ $json.output.subject }}\n*Summary:* {{ $json.output.summary }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1472,
+        512
+      ],
+      "id": "fcb99a86-7b57-468f-9951-840e47315b22",
+      "name": "Send a message5",
+      "webhookId": "cfc52407-6616-4d0d-bab1-aef0b8dcdcf5",
+      "credentials": {
+        "slackApi": {
+          "id": "Xj9bK2zz6GKDaKPl",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1856,
+        -336
+      ],
+      "id": "7f2d2d56-65f5-45e5-ac18-83ffde0b1ca7",
+      "name": "Mark a message as read",
+      "webhookId": "eb53dab1-6f33-4c4a-9377-e7dc7bbe829c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DRAWtDTcaORE6b8E",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1856,
+        -176
+      ],
+      "id": "64121018-a2c3-4d6a-9f78-7eb1539ebeb0",
+      "name": "Mark a message as read1",
+      "webhookId": "eb53dab1-6f33-4c4a-9377-e7dc7bbe829c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DRAWtDTcaORE6b8E",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1856,
+        -16
+      ],
+      "id": "503fd778-71f6-4975-9e2e-ce046d58c569",
+      "name": "Mark a message as read2",
+      "webhookId": "eb53dab1-6f33-4c4a-9377-e7dc7bbe829c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DRAWtDTcaORE6b8E",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1856,
+        160
+      ],
+      "id": "455fc6b9-f562-42db-8726-6302a992c5a6",
+      "name": "Mark a message as read3",
+      "webhookId": "eb53dab1-6f33-4c4a-9377-e7dc7bbe829c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DRAWtDTcaORE6b8E",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1856,
+        336
+      ],
+      "id": "82ff2568-8655-4198-b597-e199f5e7e454",
+      "name": "Mark a message as read4",
+      "webhookId": "eb53dab1-6f33-4c4a-9377-e7dc7bbe829c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DRAWtDTcaORE6b8E",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1856,
+        512
+      ],
+      "id": "57a32472-f4a1-4235-b174-33dccb9fa550",
+      "name": "Mark a message as read5",
+      "webhookId": "eb53dab1-6f33-4c4a-9377-e7dc7bbe829c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "DRAWtDTcaORE6b8E",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Create a record1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "Create a record2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message3": {
+      "main": [
+        [
+          {
+            "node": "Create a record3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message4": {
+      "main": [
+        [
+          {
+            "node": "Create a record4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message5": {
+      "main": [
+        [
+          {
+            "node": "Create a record5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record1": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record2": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record3": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record4": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a record5": {
+      "main": [
+        [
+          {
+            "node": "Mark a message as read5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3567b165-3e6a-43fe-bd8f-70f7b7454e3a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7f0f8b04b583b3bc48bfafe715431755b4f8c3d117fcb725b133773386f9141f"
+  },
+  "nodeGroups": [],
+  "id": "ko7ouRmG8arGXRO0",
+  "tags": []
+}
